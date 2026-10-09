@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#06080b">
+<meta name="description" content="کاوشگر عنکبوتی مقالات علمی: عنکبوتی با کینماتیک معکوس که روی کلمات مقالات راه می‌رود و آن‌ها را از جا می‌کَند.">
+<title>کاوشگر عنکبوتی مقالات علمی - نسخه فارسی</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;800&display=swap">
+<style>
+:root{
+  --bg:#06080b;--card:rgba(13,17,24,.95);--border:#1e2838;
+  --cyan:#00f0ff;--magenta:#ff007b;--yellow:#ffd000;--green:#00ff66;
+  --text:#d0d7de;--dim:#7d8590;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --font:"Vazirmatn",system-ui,-apple-system,"Segoe UI",Roboto,Tahoma,sans-serif;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  min-height:100dvh;overflow-x:hidden;user-select:none;-webkit-user-select:none;
+  background:var(--bg);color:var(--text);font-family:var(--font);
+  background-image:radial-gradient(circle at 50% 50%,rgba(20,30,48,.45),transparent 80%),
+    linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:100% 100%,28px 28px,28px 28px;
+}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+header{
+  position:sticky;top:0;z-index:100;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;
+  padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));
+  background:rgba(6,8,11,.92);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.badge-bar,.controls{display:flex;align-items:center;gap:10px}
+.controls{gap:8px;flex-wrap:wrap}
+.badge{font:11px var(--mono);letter-spacing:.5px;padding:4px 8px;border-radius:4px;
+  color:var(--cyan);background:rgba(0,240,255,.1);border:1px solid var(--cyan)}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+
+.btn{font:inherit;font-size:12px;padding:6px 12px;border-radius:4px;cursor:pointer;
+  color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--border);transition:border-color .2s,color .2s,background .2s}
+.btn:hover{border-color:var(--cyan);color:#fff}
+.btn[aria-pressed="true"],.btn.active{background:var(--cyan);color:#000;font-weight:700;border-color:var(--cyan)}
+
+main{position:relative;max-width:980px;margin:0 auto;padding:24px 16px calc(140px + env(safe-area-inset-bottom))}
+.page-title{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:6px;font-size:24px;font-weight:800;color:#fff}
+.page-title .slash{color:var(--magenta)}
+.page-title .en{font:400 15px var(--mono);color:var(--cyan);direction:ltr}
+.subhead{margin-bottom:24px;font-size:12.5px;line-height:1.8;color:var(--dim)}
+.page-indicator{display:inline-block;margin-bottom:20px;padding:4px 12px;border-radius:4px;font-size:11.5px;
+  color:var(--yellow);background:rgba(255,208,0,.08);border:1px solid rgba(255,208,0,.25)}
+
+.paper-entry{
+  position:relative;margin-bottom:16px;padding:16px 18px;padding-inline-end:42px;
+  font-size:13.5px;line-height:1.9;border-radius:6px;background:var(--card);border:1px solid var(--border);
+  transition:border-color .25s,box-shadow .25s;
+}
+.paper-entry.active-target{border-color:rgba(0,240,255,.6);box-shadow:0 0 20px rgba(0,240,255,.12)}
+.ref-num{position:absolute;inset-inline-end:10px;top:14px;font:700 11px var(--mono);color:var(--cyan)}
+
+.word-chunk{display:inline-block;margin:0 2px;transition:color .15s}
+.word-chunk.glitched{color:#fff;text-shadow:-2px 0 var(--magenta),2px 0 var(--cyan);animation:jitter .12s infinite}
+.word-chunk.plucked{visibility:hidden}
+@keyframes jitter{
+  0%{transform:translate(0,0)}25%{transform:translate(-1.5px,1px)}
+  50%{transform:translate(1px,-1.5px)}75%{transform:translate(-1px,-1px)}100%{transform:translate(1.5px,1px)}
+}
+.authors{font-weight:700;color:#e6edf3}
+.year{margin:0 4px;font-family:var(--mono);color:var(--yellow)}
+.title{color:#58a6ff;font-style:italic}
+.journal{color:#a5d6ff}
+
+.paper-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{font-size:10.5px;padding:2px 7px;border-radius:3px;color:var(--dim);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12)}
+.tag.doi{border-color:rgba(255,0,123,.45);color:#ff7bb5;font-family:var(--mono);direction:ltr}
+.tag.field{border-color:rgba(0,240,255,.45);color:#7de8ff}
+.tag.cit{border-color:rgba(0,255,102,.45);color:#7affaa}
+.preview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;margin-top:8px;color:#aab4bf}
+.paper-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.paper-foot .paper-tags{margin-top:0}
+.read-more{padding:5px 16px;border-radius:4px;font-size:12px;font-weight:700;text-decoration:none;color:#000;background:var(--cyan);border:1px solid var(--cyan);transition:background .2s,color .2s}
+.read-more:hover{background:transparent;color:var(--cyan)}
+
+#spider-canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:999}
+
+#telemetry-bar{
+  position:fixed;inset-inline:0;bottom:max(12px,env(safe-area-inset-bottom));z-index:1000;
+  width:max-content;max-width:calc(100% - 16px);margin-inline:auto;
+  display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;padding:6px 18px;border-radius:18px;
+  font-size:11.5px;background:rgba(13,17,24,.94);border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.7);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.tele-item b{font-weight:400;color:var(--cyan)}
+.tele-item b.hot{color:var(--magenta)}
+
+.infinite-scroll-status{margin-top:20px;padding:20px 0;text-align:center;font-size:12px;color:var(--dim);border-top:1px dashed var(--border)}
+
+@media (prefers-reduced-motion:reduce){
+  .status-dot,.word-chunk.glitched{animation:none}
+  .paper-entry,.btn,.word-chunk{transition:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="badge-bar">
+    <div class="badge" lang="en" dir="ltr">Crawler System: ARACHNID v6.2</div>
+    <div class="status-pill"><span class="status-dot" aria-hidden="true"></span>موتور فیزیک و تجزیه کلمات فعال</div>
+  </div>
+  <div class="controls" role="group" aria-label="کنترل‌ها">
+    <button type="button" class="btn active" id="btn-mode" title="تغییر حالت: خودکار ← لمسی ← خاموش">حالت: خودکار</button>
+    <button type="button" class="btn" id="btn-audio" aria-pressed="false">صدا: خاموش</button>
+    <button type="button" class="btn" id="btn-scan" title="رفتن عنکبوت به مقاله بعدی و اسکرول تا آن">اسکن بعدی</button>
+  </div>
+</header>
+
+<canvas id="spider-canvas" aria-hidden="true"></canvas>
+
+<main>
+  <h1 class="page-title">
+    <span>کاوشگر تار عنکبوتی</span><span class="slash" aria-hidden="true">//</span>
+    <span class="en" lang="en" dir="ltr">ARANEAE ACADEMIC MATRIX</span>
+  </h1>
+  <p class="subhead">آنالیز و فروپاشی ساختار متون در حوزه‌های نجوم، فیزیک، زیست‌شناسی، شیمی، تاریخ باستان و فلسفه</p>
+  <div class="page-indicator" id="page-counter" role="status">صفحه جاری: ۱ از ۵۰۰ [مخزن ۳۵۰٬۰۰۰ مقاله]</div>
+  <section id="articles-container" aria-label="فهرست مقالات"></section>
+  <div class="infinite-scroll-status" id="scroll-status">در حال پردازش صفحات بعدی برای کاوشگر...</div>
+</main>
+
+<div id="telemetry-bar" role="group" aria-label="وضعیت لحظه‌ای عنکبوت">
+  <div class="tele-item">موقعیت: X:<b id="pos-x">۰</b> Y:<b id="pos-y">۰</b></div>
+  <div class="tele-item">سرعت: <b id="tele-spd">۰٫۰</b></div>
+  <div class="tele-item">هدف: <b id="tele-target">شناسایی...</b></div>
+  <div class="tele-item">کلمات کنده شده: <b class="hot" id="tele-levitated">۰</b></div>
+</div>
+
+<script>
+'use strict';
+
+/* ───────── ابزارها ───────── */
+const $ = id => document.getElementById(id);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const fa = new Intl.NumberFormat('fa-IR', { useGrouping: false });
+const faG = new Intl.NumberFormat('fa-IR');
+const faD1 = new Intl.NumberFormat('fa-IR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/* ───────── ۱. پایگاه داده مقالات ───────── */
+const TOPICS = [
+  { field: "کیهان‌شناسی و نجوم",
+    authors: ["دکتر کامران وفا", "استیون هاوکینگ", "کارل سیگن", "راجر پنروز", "آرتور ادینگتون"],
+    concepts: [
+      "تابش هاوکینگ و ترمودینامیک افق رویداد سیاه‌چاله‌ها",
+      "نوسانات امواج گرانشی ناشی از ادغام ستاره‌های نوترونی دوتایی",
+      "ماده تاریک باریونی و مدل استاندارد تورم کیهانی لامبدا-سی‌دی‌ام",
+      "طیف‌سنجی فوتومتریک کهکشان‌های اولیه با تلسکوپ فضایی جیمز وب",
+      "ناهمسانگردی تابش پس‌زمینه کیهانی و انحنای ساختار فضا-زمان"],
+    journals: ["Astrophysical Journal", "Monthly Notices of RAS", "Nature Astronomy"],
+    wiki: ["تابش هاوکینگ","موج گرانشی","ماده تاریک","تلسکوپ فضایی جیمز وب","تابش زمینه کیهانی"] },
+  { field: "فیزیک کوانتوم و نسبیت",
+    authors: ["ورنر هایزنبرگ", "نیلز بور", "ریچارد فاینمن", "آلبرت اینشتین", "ماکس پلانک"],
+    concepts: [
+      "درهم‌تنیدگی کوانتومی و نقض نامساوی بل در اپتیک غیرخطی",
+      "پدیده‌شناسی گرانش کوانتومی حلقه‌ای و ماتریس پراکندگی ریسمان‌ها",
+      "برهم‌کنش فوتون-بوزون هیگز در برخورددهنده بزرگ هادرونی سرن",
+      "گذار فاز توپولوژیک در عایق‌های نیمه‌رسانای دمای بحرانی بالا",
+      "اصل عدم قطعیت و اندازه‌گیری کوانتومی بدون تخریب تابع موج"],
+    journals: ["Physical Review Letters", "Reviews of Modern Physics", "Journal of High Energy Physics"],
+    wiki: ["درهم‌تنیدگی کوانتومی","گرانش کوانتومی حلقه‌ای","بوزون هیگز","عایق توپولوژیک","اصل عدم قطعیت"] },
+  { field: "زیست‌شناسی و ژنتیک تکاملی",
+    authors: ["چارلز داروین", "ریچارد داوکینز", "فرانسیس کریک", "ارنست مایر", "لین مارگولیس"],
+    concepts: [
+      "تبارشناسی مولکولی بندپایان باستان و منشأ تارریس‌های عنکبوتیان",
+      "مکانیسم‌های ویرایش ژنوم کریسپر-کس۹ در درمان ناهنجاری‌های بافتی",
+      "هم‌زیستی درون‌سلولی میتوکندریایی و فرگشت یوکاریوت‌های نخستین",
+      "تنظیم اپی‌ژنتیک و متیلاسیون دی‌ان‌ای در پاسخ به تنش‌های محیطی",
+      "پروتئومیکس و ساختار بلورین زهر عنکبوت‌های منزوی و فونوتوکسین‌ها"],
+    journals: ["Cell", "Nature Ecology & Evolution", "Molecular Biology and Evolution"],
+    wiki: ["بندپایان","کریسپر","میتوکندری","اپی‌ژنتیک","عنکبوت"] },
+  { field: "شیمی و نانومواد پیشرفته",
+    authors: ["لینوس پاولینگ", "احمد زویل", "ماری کوری", "هارولد کروتو", "عمر یاغی"],
+    concepts: [
+      "سینتیک فمتوثانیه‌ای واکنش‌های کاتالیزوری در چارچوب‌های فلز-آلی",
+      "خودسامانی زنجیره‌های کربنی گرافن و لوله‌های نانومتری تک‌جداره",
+      "مکانیسم انتقال بار الکتریکی در سلول‌های خورشیدی پروسکایت",
+      "ترمودینامیک پیوندهای هیدروژنی در مایعات یونی فوق‌بحرانی",
+      "سنتز نانوپلیمرهای زیست‌تخریب‌پذیر با ساختار زنجیره‌ای اصلاح‌شده"],
+    journals: ["Journal of the American Chemical Society", "Angewandte Chemie", "Chemical Reviews"],
+    wiki: ["چارچوب فلز-آلی","گرافن","سلول خورشیدی پروسکایتی","مایع یونی","پلیمر زیست‌تخریب‌پذیر"] },
+  { field: "تاریخ باستان و تمدن‌ها",
+    authors: ["ویل دورانت", "ادوارد گیبون", "آرنولد توینبی", "هرودوت", "فرنان برودل"],
+    concepts: [
+      "بررسی کتیبه‌های میخی ایلامی و ساختار دیوانی امپراتوری هخامنشی",
+      "تحلیل کربن ۱۴ سازه‌های مگالیتیک و آغاز کشاورزی در هلال حاصلخیز",
+      "فروپاشی اواخر عصر برنز و سیر مهاجرت اقوام باستانی مدیترانه",
+      "تجارت ابریشم و تبادلات فرهنگی تمدن‌های بین‌النهرین و فلات ایران",
+      "خط‌شناسی و گاه‌شماری تطبیقی در تمدن‌های باستانی حوزه نیل"],
+    journals: ["American Journal of Archaeology", "Antiquity", "Journal of Near Eastern Studies"],
+    wiki: ["هخامنشیان","رادیوکربن","فروپاشی عصر مفرغ","راه ابریشم","مصر باستان"] },
+  { field: "فلسفه علم و معرفت‌شناسی",
+    authors: ["ایمانوئل کانت", "کارل پوپر", "لودویگ ویتگنشتاین", "توماس کوهن", "برتراند راسل"],
+    concepts: [
+      "مسئله استقرا و اصل ابطال‌پذیری در روش‌شناسی علوم تجربی",
+      "تغییر پارادایم و ساختار انقلاب‌های علمی در معرفت‌شناسی مدرن",
+      "روابط معنایی زبان و ساختار منطقی در رساله ویتگنشتاین",
+      "پدیدارشناسی ادراک زمان و پیوستار آگاهی از منظر ادموند هوسرل",
+      "رئالیسم ساختاری در مکانیک کوانتوم و حدود شناخت عقلانی"],
+    journals: ["Philosophy of Science", "Mind", "The British Journal for the Philosophy of Science"],
+    wiki: ["ابطال‌پذیری","ساختار انقلاب‌های علمی","رساله منطقی-فلسفی","پدیدارشناسی","رئالیسم ساختاری"] }
+];
+
+/* ───────── ۲. تولید کارت‌ها (DOM امن، بدون innerHTML) ───────── */
+const MAX_CARDS = 600;
+const container = $('articles-container');
+const cardWords = new WeakMap();   // کارت ← فهرست کلمات
+const visibleCards = new Set();    // کارت‌های نزدیک به نمای صفحه
+let nextIndex = 1;
+const PREVIEWS = [
+  f => `این مقاله در حوزه ${f} با مرور یافته‌های پیشین و ارائه شواهد تازه، چارچوب‌های نظری رایج را ارزیابی می‌کند. نتایج نشان می‌دهد تفسیرهای سنتی در شرایط مرزی نیاز به بازنگری دارند و مسیرهای تازه‌ای برای پژوهش‌های بعدی گشوده می‌شود.`,
+  f => `پژوهش حاضر در قلمرو ${f} با رویکردی میان‌رشته‌ای، داده‌های تجربی و مدل‌های نظری را در کنار هم می‌گذارد. نویسنده ضمن نقد ادبیات موجود، محدودیت‌های روش را بررسی و پیشنهادهایی برای مطالعات آینده مطرح می‌کند.`,
+  f => `در این مطالعه از حوزه ${f}، پرسش‌های بنیادین مطرح‌شده در دهه‌های گذشته بازخوانی می‌شود. تحلیل نهایی تصویری روشن‌تر از وضعیت دانش کنونی ارائه می‌دهد و نقاط اختلاف میان مکتب‌های مختلف را برجسته می‌کند.`
+];
+
+const cardObserver = new IntersectionObserver(entries => {
+  for (const e of entries) e.isIntersecting ? visibleCards.add(e.target) : visibleCards.delete(e.target);
+}, { rootMargin: '120px' });
+
+function tokens(text, cls, list) {
+  const frag = document.createDocumentFragment();
+  text.split(/\s+/).forEach((w, i) => {
+    if (i) frag.append(' ');
+    const s = document.createElement('span');
+    s.className = `word-chunk ${cls}`;
+    s.textContent = w;
+    list.push({ el: s, levitated: false });
+    frag.append(s);
+  });
+  return frag;
+}
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+function createCard(idx) {
+  const t = TOPICS[(idx - 1) % TOPICS.length];
+  const words = [];
+  const ci = Math.floor(rnd(0, t.concepts.length));
+  const card = el('article', 'paper-entry');
+  card.id = `paper-${idx}`;
+  card.dataset.index = idx;
+
+  const ref = el('div', 'ref-num', `${idx}.`);
+  ref.setAttribute('aria-hidden', 'true');
+
+  const p = el('p');
+  p.append(
+    tokens(pick(t.authors), 'authors', words), ' ',
+    el('span', 'year', `(${1970 + Math.floor(rnd(0, 55))})`), '. ',
+    tokens(`بررسی جامع «${t.concepts[ci]}»`, 'title', words), '. ',
+    tokens(`منتشر شده در مجله تخصصی ${pick(t.journals)}، جلد ${fa.format(Math.floor(rnd(10, 100)))}، صص ${fa.format(Math.floor(rnd(100, 900)))}`, 'journal', words), '.'
+  );
+
+  const tags = el('div', 'paper-tags');
+  tags.append(
+    el('span', 'tag field', `[شاخه: ${t.field}]`),
+    el('span', 'tag doi', `10.${Math.floor(rnd(1000, 9999))}/sciref.${2000 + idx}`),
+    el('span', 'tag cit', `استنادات: ${faG.format(Math.floor(rnd(12, 462)))}`)
+  );
+
+  const pv = el('p', 'preview');
+  pv.append(tokens(pick(PREVIEWS)(t.field), 'preview-w', words));
+
+  const term = t.wiki[ci];
+  const more = el('a', 'read-more', 'ادامه مطلب');
+  more.href = `https://fa.wikipedia.org/w/index.php?title=Special:Search&search=${encodeURIComponent(term)}&go=Go`;
+  more.target = '_blank';
+  more.rel = 'noopener noreferrer';
+  more.setAttribute('aria-label', `ادامه مطلب درباره «${term}» در ویکی‌پدیا (در زبانه جدید باز می‌شود)`);
+
+  const foot = el('div', 'paper-foot');
+  foot.append(tags, more);
+  card.append(ref, p, pv, foot);
+  cardWords.set(card, words);
+  cardObserver.observe(card);
+  return card;
+}
+
+function loadBatch(count) {
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < count && nextIndex <= MAX_CARDS; i++) frag.append(createCard(nextIndex++));
+  container.append(frag);
+  const page = Math.min(500, Math.ceil(nextIndex / 8));
+  $('page-counter').textContent = `صفحه اسکرول شده: ${fa.format(page)} از ۵۰۰ [مخزن ۳۵۰٬۰۰۰ مقاله علمی]`;
+  if (nextIndex > MAX_CARDS) {
+    $('scroll-status').textContent = 'پایان نمونه‌های این نشست؛ برای شروع دوباره صفحه را تازه کنید.';
+    sentinelObserver.disconnect();
+  }
+}
+
+/* اسکرول بی‌نهایت با IntersectionObserver به‌جای شنونده scroll */
+const sentinelObserver = new IntersectionObserver(entries => {
+  if (!entries[0].isIntersecting) return;
+  loadBatch(15);
+  // اگر هنوز در نما بود، دوباره بررسی شود
+  sentinelObserver.unobserve($('scroll-status'));
+  requestAnimationFrame(() => nextIndex <= MAX_CARDS && sentinelObserver.observe($('scroll-status')));
+}, { rootMargin: '800px' });
+
+loadBatch(30);
+sentinelObserver.observe($('scroll-status'));
+
+/* ───────── ۳. صدا (Web Audio، ساخت تنبل) ───────── */
+let actx = null, audioOn = false;
+
+function blip(type, f0, f1, dur, vol, linear) {
+  if (!audioOn || !actx) return;
+  try {
+    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency[linear ? 'linearRampToValueAtTime' : 'exponentialRampToValueAtTime'](f1, t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.connect(g).connect(actx.destination);
+    o.start(t);
+    o.stop(t + dur + .01);
+  } catch (_) { /* نادیده گرفتن خطاهای صوتی */ }
+}
+const stepSound = () => blip('sine', rnd(600, 1000), 70, .035, .03, false);
+const glitchSound = () => blip('sawtooth', rnd(1200, 2000), 200, .07, .04, true);
+
+$('btn-audio').addEventListener('click', e => {
+  actx ||= new (window.AudioContext || window.webkitAudioContext)();
+  if (actx.state === 'suspended') actx.resume();
+  audioOn = !audioOn;
+  e.currentTarget.textContent = `صدا: ${audioOn ? 'روشن' : 'خاموش'}`;
+  e.currentTarget.setAttribute('aria-pressed', audioOn);
+});
+
+/* ───────── ۴. بوم و ورودی ───────── */
+const canvas = $('spider-canvas');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, baseScale = 1, scale = 1;
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  baseScale = scale = W < 640 ? .78 : 1;
+}
+window.addEventListener('resize', resize);
+resize();
+
+let mode = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'off' : 'auto';
+const mouse = { x: W / 2, y: H / 2 };
+
+window.addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
+window.addEventListener('pointerdown', e => { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
+
+
+/* ───────── ۵. مدل عنکبوت و کینماتیک معکوس ───────── */
+const spider = {
+  x: W / 2, y: H / 2, angle: 0, targetAngle: 0, speed: 0, maxSpeed: 4.8,
+  targetX: W / 2, targetY: 300, silk: [], legs: [], focus: null, asleep: false, shrink: 1
+};
+
+const LEGS = [
+  { side: -1, pair: 0, rootAngle: -.45, defaultAngle: -.75, lengths: [36, 44, 42], group: 0 },
+  { side: -1, pair: 1, rootAngle: -.95, defaultAngle: -1.25, lengths: [30, 38, 36], group: 1 },
+  { side: -1, pair: 2, rootAngle: -1.55, defaultAngle: -1.85, lengths: [28, 34, 34], group: 0 },
+  { side: -1, pair: 3, rootAngle: -2.25, defaultAngle: -2.55, lengths: [42, 52, 48], group: 1 },
+  { side: 1, pair: 0, rootAngle: .45, defaultAngle: .75, lengths: [36, 44, 42], group: 1 },
+  { side: 1, pair: 1, rootAngle: .95, defaultAngle: 1.25, lengths: [30, 38, 36], group: 0 },
+  { side: 1, pair: 2, rootAngle: 1.55, defaultAngle: 1.85, lengths: [28, 34, 34], group: 1 },
+  { side: 1, pair: 3, rootAngle: 2.25, defaultAngle: 2.55, lengths: [42, 52, 48], group: 0 }
+];
+
+for (const cfg of LEGS) {
+  const reach = (cfg.lengths[0] + cfg.lengths[1] + cfg.lengths[2]) * scale * .7;
+  const a = spider.angle + cfg.defaultAngle;
+  const tx = spider.x + Math.cos(a) * reach, ty = spider.y + Math.sin(a) * reach;
+  spider.legs.push({
+    ...cfg, root: { x: spider.x, y: spider.y },
+    tip: { x: tx, y: ty }, from: { x: tx, y: ty }, to: { x: tx, y: ty },
+    lift: 0, stepping: false, progress: 1
+  });
+}
+
+/* حل IK دو‌مفصلی (قانون کسینوس‌ها) */
+function solveIK(root, tip, l1, l2, bend) {
+  const dx = tip.x - root.x, dy = tip.y - root.y;
+  const dist = Math.hypot(dx, dy), base = Math.atan2(dy, dx);
+  const d = Math.max(Math.abs(l1 - l2) * 1.05, Math.min(dist, (l1 + l2) * .999));
+  const cosA = (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d);
+  const a = base + Math.acos(Math.max(-1, Math.min(1, cosA))) * bend;
+  return { x: root.x + Math.cos(a) * l1, y: root.y + Math.sin(a) * l1 };
+}
+
+function setFocus(card, lockMs = 0) {
+  container.querySelectorAll('.active-target').forEach(n => n.classList.remove('active-target'));
+  card.classList.add('active-target');
+  spider.focus = { card, fx: rnd(.2, .8), fy: rnd(.2, .8), lock: performance.now() + lockMs };
+  $('tele-target').textContent = `مقاله شماره ${fa.format(card.dataset.index)}`;
+}
+
+function scrambleTargets() {
+  const all = [...visibleCards];
+  if (!all.length) return;
+  const inView = all.filter(c => { const r = c.getBoundingClientRect(); return r.top >= -50 && r.bottom <= H + 100; });
+  setFocus(pick(inView.length ? inView : all));
+}
+
+/* «اسکن بعدی»: رفتن عنکبوت به مقاله بعدی (به‌ترتیب) و اسکرول نرم تا آن */
+function scanNext() {
+  if (mode !== 'auto') setMode('auto');
+  let n = spider.focus ? Number(spider.focus.card.dataset.index) + 1 : 1;
+  while (n > nextIndex - 1 && nextIndex <= MAX_CARDS) loadBatch(15);
+  if (n > nextIndex - 1) n = 1;
+  const card = $(`paper-${n}`);
+  setFocus(card, 1500);
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function restoreWords() {
+  for (const card of container.children)
+    for (const w of cardWords.get(card))
+      if (w.levitated) { w.el.classList.remove('glitched', 'plucked'); w.levitated = false; }
+}
+
+/* حالت‌ها: خودکار ← لمسی ← خاموش (عنکبوت بالای صفحه می‌خوابد و متن آزاد می‌شود) */
+const MODE_LABEL = { auto: 'حالت: خودکار', touch: 'حالت: لمسی', off: 'حالت: خاموش' };
+const MODE_ORDER = ['auto', 'touch', 'off'];
+
+function setMode(m) {
+  mode = m;
+  const b = $('btn-mode');
+  b.textContent = MODE_LABEL[m];
+  b.classList.toggle('active', m !== 'off');
+  if (m === 'off') {
+    container.querySelectorAll('.active-target').forEach(n => n.classList.remove('active-target'));
+    restoreWords();
+    particles.length = 0;
+    $('tele-target').textContent = 'در حال خواب';
+  } else if (m === 'touch') {
+    $('tele-target').textContent = 'دنبال‌کننده لمس';
+  } else if (spider.focus) {
+    setFocus(spider.focus.card);
+  }
+}
+$('btn-mode').addEventListener('click', () => setMode(MODE_ORDER[(MODE_ORDER.indexOf(mode) + 1) % MODE_ORDER.length]));
+$('btn-scan').addEventListener('click', scanNext);
+setInterval(() => { if (mode === 'auto' && !document.hidden && Math.random() < .45) scrambleTargets(); }, 4200);
+
+/* ───────── ۶. کلمات کنده‌شده ───────── */
+const particles = [];
+let pluckedTotal = 0;
+
+function pluck(word, fx, fy) {
+  if (mode === 'off' || word.levitated) return;
+  word.levitated = true;
+  const node = word.el;
+  const r = node.getBoundingClientRect();
+  const ang = rnd(0, Math.PI * 2), force = rnd(3.5, 10);
+  node.classList.add('glitched');
+  if (particles.length < 120) {
+    particles.push({
+      text: node.textContent, x: r.left + r.width / 2, y: r.top + r.height / 2,
+      vx: Math.cos(ang) * force, vy: Math.sin(ang) * force - 3.5,
+      scale: 1, rot: rnd(-.2, .2), rotSpeed: rnd(-.04, .04),
+      color: Math.random() > .5 ? '#00f0ff' : '#ff007b',
+      life: 1, decay: rnd(.0035, .0075), fx, fy
+    });
+  }
+  requestAnimationFrame(() => node.classList.add('plucked'));
+  // بازگشت کلمه پس از چند ثانیه تا متن برای همیشه از بین نرود
+  setTimeout(() => { node.classList.remove('glitched', 'plucked'); word.levitated = false; }, 9000);
+  pluckedTotal++;
+  glitchSound();
+}
+
+function footCollision(fx, fy) {
+  if (mode === 'off') return;
+  const rad = 22 * scale;
+  for (const card of visibleCards) {
+    const cr = card.getBoundingClientRect();
+    if (fx < cr.left - rad || fx > cr.right + rad || fy < cr.top - rad || fy > cr.bottom + rad) continue;
+    for (const w of cardWords.get(card)) {
+      if (w.levitated) continue;
+      const r = w.el.getBoundingClientRect();
+      if (fx >= r.left - rad && fx <= r.right + rad && fy >= r.top - rad && fy <= r.bottom + rad) pluck(w, fx, fy);
+    }
+  }
+}
+
+/* ───────── ۷. به‌روزرسانی فیزیک (وابسته به زمان واقعی) ───────── */
+const headerEl = document.querySelector('header');
+const tele = { x: $('pos-x'), y: $('pos-y'), s: $('tele-spd'), l: $('tele-levitated') };
+let teleClock = 0;
+
+function update(dt, now) {
+  const k = r => 1 - Math.pow(1 - r, dt);
+  spider.shrink += ((mode === 'off' ? .6 : 1) - spider.shrink) * k(.06);
+  scale = baseScale * spider.shrink;
+  if (mode === 'touch') {
+    spider.targetX = mouse.x; spider.targetY = mouse.y;
+  } else if (mode === 'off') {
+    spider.targetX = W / 2;
+    spider.targetY = headerEl.getBoundingClientRect().bottom + 48;
+  } else if (spider.focus) {
+    const f = spider.focus;
+    if (!visibleCards.has(f.card) && now > f.lock) scrambleTargets();
+    const r = f.card.getBoundingClientRect();
+    spider.targetX = r.left + r.width * f.fx;
+    spider.targetY = r.top + r.height * f.fy;
+  }
+
+  const dx = spider.targetX - spider.x, dy = spider.targetY - spider.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist > 14) spider.targetAngle = Math.atan2(dy, dx);
+  spider.asleep = mode === 'off' && dist < 20 && spider.speed < .3;
+
+  let diff = spider.targetAngle - spider.angle;
+  diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+  spider.angle += diff * k(.085);
+
+  const goal = dist < 18 ? 0 : Math.min(spider.maxSpeed, dist * .04);
+  spider.speed += (goal - spider.speed) * k(.12);
+  const ca = Math.cos(spider.angle), sa = Math.sin(spider.angle);
+  spider.x += ca * spider.speed * dt;
+  spider.y += sa * spider.speed * dt;
+
+  // تار ابریشم
+  const last = spider.silk[spider.silk.length - 1];
+  if (spider.speed > .4 && (!last || Math.hypot(spider.x - last.x, spider.y - last.y) > 22)) {
+    spider.silk.push({ x: spider.x - ca * 34 * scale, y: spider.y - sa * 34 * scale, a: .8 });
+    if (spider.silk.length > 45) spider.silk.shift();
+  }
+  for (const s of spider.silk) s.a *= Math.pow(.992, dt);
+
+  // پاها
+  const phase = Math.floor(now / 130) % 2;
+  for (const leg of spider.legs) {
+    const ra = spider.angle + leg.rootAngle;
+    leg.root.x = spider.x + Math.cos(ra) * 14 * scale;
+    leg.root.y = spider.y + Math.sin(ra) * 14 * scale;
+
+    const reach = (leg.lengths[0] + leg.lengths[1] + leg.lengths[2]) * scale * .72;
+    const ia = spider.angle + leg.defaultAngle;
+    const ix = spider.x + Math.cos(ia) * reach + ca * spider.speed * 7;
+    const iy = spider.y + Math.sin(ia) * reach + sa * spider.speed * 7;
+    const off = Math.hypot(ix - leg.tip.x, iy - leg.tip.y);
+
+    if (!leg.stepping && off > 32 * scale && (leg.group === phase || off > 52 * scale)) {
+      leg.stepping = true;
+      leg.progress = 0;
+      leg.from = { ...leg.tip };
+      leg.to = { x: ix + rnd(-4, 4), y: iy + rnd(-4, 4) };
+    }
+    if (leg.stepping) {
+      leg.progress += .14 * dt;
+      if (leg.progress >= 1) {
+        leg.stepping = false;
+        leg.progress = 1;
+        leg.tip = { ...leg.to };
+        leg.lift = 0;
+        stepSound();
+        footCollision(leg.tip.x, leg.tip.y);
+      } else {
+        const p = leg.progress;
+        leg.lift = Math.sin(p * Math.PI) * 14 * scale;
+        leg.tip.x = leg.from.x + (leg.to.x - leg.from.x) * p;
+        leg.tip.y = leg.from.y + (leg.to.y - leg.from.y) * p;
+      }
+    }
+  }
+
+  // ذرات
+  const drag = Math.pow(.98, dt);
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    p.vy += .08 * dt;
+    p.vx *= drag; p.vy *= drag;
+    p.rot += p.rotSpeed * dt;
+    p.scale += .005 * dt;
+    p.life -= p.decay * dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  // نوار وضعیت (حدود ۱۰ بار در ثانیه)
+  if (now - teleClock > 100) {
+    teleClock = now;
+    tele.x.textContent = fa.format(Math.round(spider.x));
+    tele.y.textContent = fa.format(Math.round(spider.y));
+    tele.s.textContent = faD1.format(spider.speed);
+    tele.l.textContent = faG.format(pluckedTotal);
+  }
+}
+
+/* ───────── ۸. رندر ───────── */
+const rr = (x, y, w, h, r) => ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h);
+
+function drawLeg(leg) {
+  const tip = { x: leg.tip.x, y: leg.tip.y - leg.lift };
+  const l1 = leg.lengths[0] * scale, l2 = (leg.lengths[1] + leg.lengths[2]) * scale;
+  const bend = leg.pair < 2 ? leg.side : -leg.side;
+  const r = leg.root, k = solveIK(r, tip, l1, l2, bend);
+  const ax = k.x + (tip.x - k.x) * .52, ay = k.y + (tip.y - k.y) * .52;
+
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(r.x + 3, r.y + 5); ctx.lineTo(k.x + 4, k.y + 8); ctx.lineTo(ax + 3, ay + 6); ctx.lineTo(tip.x + 1, tip.y + 3);
+  ctx.strokeStyle = 'rgba(0,0,0,.38)'; ctx.lineWidth = 3.2 * scale; ctx.stroke();
+
+  let g = ctx.createLinearGradient(r.x, r.y, k.x, k.y);
+  g.addColorStop(0, '#161b22'); g.addColorStop(.5, '#2d3746'); g.addColorStop(1, '#0d1117');
+  ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(k.x, k.y);
+  ctx.strokeStyle = g; ctx.lineWidth = 4.2 * scale; ctx.stroke();
+
+  ctx.beginPath(); ctx.arc(k.x, k.y, 2.6 * scale, 0, Math.PI * 2);
+  ctx.fillStyle = '#00f0ff'; ctx.fill();
+
+  g = ctx.createLinearGradient(k.x, k.y, ax, ay);
+  g.addColorStop(0, '#2c3440'); g.addColorStop(1, '#10141a');
+  ctx.beginPath(); ctx.moveTo(k.x, k.y); ctx.lineTo(ax, ay);
+  ctx.strokeStyle = g; ctx.lineWidth = 2.8 * scale; ctx.stroke();
+
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(tip.x, tip.y);
+  ctx.strokeStyle = '#404c5c'; ctx.lineWidth = 1.8 * scale; ctx.stroke();
+
+  ctx.beginPath(); ctx.arc(tip.x, tip.y, 2 * scale, 0, Math.PI * 2);
+  ctx.fillStyle = leg.stepping ? '#ff007b' : '#00f0ff'; ctx.fill();
+}
+
+function drawBody() {
+  const s = scale;
+  ctx.save();
+  ctx.translate(spider.x, spider.y);
+  ctx.rotate(spider.angle);
+
+  ctx.beginPath(); ctx.ellipse(-2, 6, 32 * s, 16 * s, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fill();
+
+  // شکم
+  let g = ctx.createRadialGradient(-24 * s, -3, 3, -24 * s, 0, 24 * s);
+  g.addColorStop(0, '#2c3543'); g.addColorStop(.5, '#151a22'); g.addColorStop(1, '#07090c');
+  ctx.beginPath(); ctx.ellipse(-24 * s, 0, 22 * s, 15 * s, 0, 0, Math.PI * 2);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.strokeStyle = '#1b232e'; ctx.lineWidth = 1.4; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-36 * s, 0); ctx.lineTo(-12 * s, 0);
+  ctx.strokeStyle = 'rgba(0,240,255,.4)'; ctx.lineWidth = 1.2; ctx.stroke();
+
+  // سر و سینه
+  g = ctx.createRadialGradient(8 * s, -2, 2, 8 * s, 0, 16 * s);
+  g.addColorStop(0, '#364253'); g.addColorStop(.5, '#1c222c'); g.addColorStop(1, '#0a0c10');
+  ctx.beginPath(); ctx.ellipse(8 * s, 0, 15 * s, 12 * s, 0, 0, Math.PI * 2);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.strokeStyle = '#2b3544'; ctx.lineWidth = 1.4; ctx.stroke();
+
+  ctx.globalAlpha = spider.asleep ? .22 : 1;
+  for (const [x, y, r, c] of [
+    [19, -2.2, 1.6, '#00f0ff'], [19, 2.2, 1.6, '#00f0ff'],
+    [17.5, -5.5, 1.3, '#ff007b'], [17.5, 5.5, 1.3, '#ff007b'],
+    [15, -3, 1.2, '#00ff66'], [15, 3, 1.2, '#00ff66']
+  ]) {
+    ctx.beginPath(); ctx.arc(x * s, y * s, r * s, 0, Math.PI * 2);
+    ctx.fillStyle = c; ctx.fill();
+  }
+
+  ctx.globalAlpha = 1;
+  // دندان‌های نیشی
+  ctx.beginPath();
+  rr(20 * s, -5 * s, 6 * s, 4.5 * s, 2);
+  rr(20 * s, .5 * s, 6 * s, 4.5 * s, 2);
+  ctx.fillStyle = '#11141a'; ctx.fill();
+  ctx.strokeStyle = '#ff007b'; ctx.lineWidth = .8; ctx.stroke();
+
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(18 * s, side * 7 * s); ctx.lineTo(26 * s, side * 11 * s); ctx.lineTo(33 * s, side * 8 * s);
+    ctx.strokeStyle = '#3a4658'; ctx.lineWidth = 2 * s; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function render(now) {
+  ctx.clearRect(0, 0, W, H);
+
+  // ابریشم (محو شدن تدریجی هر قطعه)
+  const silk = spider.silk;
+  ctx.lineWidth = 1;
+  for (let i = 1; i < silk.length; i++) {
+    ctx.beginPath();
+    ctx.moveTo(silk[i - 1].x, silk[i - 1].y);
+    ctx.lineTo(silk[i].x, silk[i].y);
+    ctx.strokeStyle = `rgba(0,240,255,${(.45 * silk[i].a).toFixed(3)})`;
+    ctx.stroke();
+  }
+
+  // کلمات معلق با انحراف رنگی
+  ctx.font = 'bold 13px "Vazirmatn", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const p of particles) {
+    ctx.save();
+    ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(p.scale, p.scale);
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.strokeStyle = p.color; ctx.lineWidth = .8; ctx.strokeRect(-24, -12, 48, 24);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(p.fx - p.x, p.fy - p.y);
+    ctx.strokeStyle = 'rgba(255,0,123,.2)'; ctx.lineWidth = .6; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,0,123,.8)'; ctx.fillText(p.text, -1.5, 0);
+    ctx.fillStyle = 'rgba(0,240,255,.8)'; ctx.fillText(p.text, 1.5, 0);
+    ctx.fillStyle = '#fff'; ctx.fillText(p.text, 0, 0);
+    ctx.restore();
+  }
+
+  spider.legs.forEach(drawLeg);
+  drawBody();
+
+  if (mode === 'off') {
+    if (spider.asleep) {
+      ctx.fillStyle = '#7de8ff';
+      for (let i = 0; i < 3; i++) {
+        const t = (now / 1600 + i / 3) % 1;
+        ctx.globalAlpha = 1 - t;
+        ctx.font = `bold ${10 + i * 3}px system-ui, sans-serif`;
+        ctx.fillText('z', spider.x + 20 + t * 28, spider.y - 18 - t * 38);
+      }
+      ctx.globalAlpha = 1;
+    }
+    return;
+  }
+
+  // رتیکل هدف
+  ctx.save();
+  ctx.translate(spider.targetX, spider.targetY);
+  ctx.rotate(now * .003);
+  ctx.strokeStyle = 'rgba(0,240,255,.4)'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
+  ctx.beginPath(); ctx.arc(0, 0, 24 * scale, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
+
+/* ───────── ۹. حلقه اصلی ───────── */
+let prev = performance.now();
+function loop(now) {
+  const dt = Math.min((now - prev) / 16.667, 3);  // ۱ = یک فریم ۶۰ هرتزی
+  prev = now;
+  update(dt, now);
+  render(now);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+setMode(mode);
+setTimeout(() => mode === 'auto' && scrambleTargets(), 700);
+</script>
+</body>
+</html>
